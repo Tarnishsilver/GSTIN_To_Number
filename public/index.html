@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GSTIN Business Contact Discovery</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111;
+    }
+
+    header p {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .input-group input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      outline: none;
+      font-family: monospace;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .input-group input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    .input-group button {
+      padding: 0.75rem 1.5rem;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .input-group button:hover {
+      background: #1d4ed8;
+    }
+
+    .input-group button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .status {
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .status-loading {
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    .status-error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .status-info {
+      background: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .status-success {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.75rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.9rem;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: #111;
+      text-align: right;
+    }
+
+    .contact-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .contact-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #111;
+      font-family: monospace;
+    }
+
+    .contact-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-high {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-medium {
+      background: #fef9c3;
+      color: #854d0e;
+    }
+
+    .badge-low {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-source {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .source-url {
+      font-size: 0.75rem;
+      color: #2563eb;
+      word-break: break-all;
+    }
+
+    .polling-text {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.5rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: #999;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>GSTIN Business Contact Discovery</h1>
+      <p>Find publicly available business contact information from a GSTIN</p>
+    </header>
+
+    <div class="card">
+      <div class="input-group">
+        <input
+          type="text"
+          id="gstin-input"
+          placeholder="Enter GSTIN (e.g. 27ABCDE1234F1Z0)"
+          maxlength="15"
+          autocomplete="off"
+        />
+        <button id="lookup-btn" onclick="startLookup()">Find Business</button>
+      </div>
+    </div>
+
+    <div id="status" class="hidden"></div>
+    <div id="result" class="hidden"></div>
+
+    <footer>
+      This tool only retrieves publicly available business contact information.
+    </footer>
+  </div>
+
+  <script>
+    const API = "/api/v1";
+
+    let pollingInterval = null;
+
+    function getConfidenceBadgeClass(confidence) {
+      if (confidence >= 0.9) return "badge-high";
+      if (confidence >= 0.7) return "badge-medium";
+      return "badge-low";
+    }
+
+    function getConfidenceLabel(confidence) {
+      if (confidence >= 0.9) return "High";
+      if (confidence >= 0.7) return "Medium";
+      return "Low";
+    }
+
+    function showStatus(type, message) {
+      const el = document.getElementById("status");
+      el.className = "status status-" + type;
+      el.innerHTML = message;
+      el.classList.remove("hidden");
+    }
+
+    function hideStatus() {
+      document.getElementById("status").classList.add("hidden");
+    }
+
+    function hideResult() {
+      document.getElementById("result").classList.add("hidden");
+    }
+
+    function stopPolling() {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+      }
+    }
+
+    async function startLookup() {
+      stopPolling();
+      hideStatus();
+      hideResult();
+
+      const input = document.getElementById("gstin-input");
+      const btn = document.getElementById("lookup-btn");
+      const gstin = input.value.trim();
+
+      if (!gstin) {
+        showStatus("error", "Please enter a GSTIN.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Searching...";
+      showStatus("loading", "Validating and looking up business information...");
+
+      try {
+        const res = await fetch(API + "/lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gstin }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showStatus("error", data.error?.message || "Lookup failed");
+          btn.disabled = false;
+          btn.textContent = "Find Business";
+          return;
+        }
+
+        pollLookup(data.lookupId);
+      } catch (err) {
+        showStatus("error", "Network error. Please try again.");
+        btn.disabled = false;
+        btn.textContent = "Find Business";
+      }
+    }
+
+    async function pollLookup(lookupId) {
+      showStatus("loading", 'Processing lookup... <span class="polling-text">This may take a moment.</span>');
+
+      pollingInterval = setInterval(async () => {
+        try {
+          const res = await fetch(API + "/lookup/" + lookupId);
+          const data = await res.json();
+
+          if (data.status === "completed") {
+            stopPolling();
+            renderResult(data);
+          } else if (data.status === "failed") {
+            stopPolling();
+            showStatus("error", data.error || data.result?.message || "Lookup failed");
+          }
+        } catch (err) {
+          stopPolling();
+          showStatus("error", "Failed to fetch results.");
+        }
+      }, 1500);
+    }
+
+    function renderResult(data) {
+      hideStatus();
+
+      const btn = document.getElementById("lookup-btn");
+      btn.disabled = false;
+      btn.textContent = "Find Business";
+
+      const resultEl = document.getElementById("result");
+      resultEl.classList.remove("hidden");
+
+      let html = "";
+
+      if (data.business) {
+        const b = data.business;
+        html += '<div class="card">';
+        html += '<div class="section-title">Business Profile</div>';
+
+        const rows = [
+          ["GSTIN", b.gstin],
+          ["Legal Name", b.legalName || "N/A"],
+          ["Trade Name", b.tradeName || "N/A"],
+          ["City", b.city || "N/A"],
+          ["State", b.state || "N/A"],
+          ["PIN Code", b.pincode || "N/A"],
+        ];
+
+        for (const [label, value] of rows) {
+          html +=
+            '<div class="detail-row"><span class="detail-label">' +
+            label +
+            '</span><span class="detail-value">' +
+            value +
+            "</span></div>";
+        }
+
+        if (data.contacts?.website) {
+          html +=
+            '<div class="detail-row"><span class="detail-label">Website</span><span class="detail-value"><a href="' +
+            data.contacts.website +
+            '" target="_blank" rel="noopener">' +
+            data.contacts.website +
+            "</a></span></div>";
+        }
+
+        html += "</div>";
+      }
+
+      if (data.contacts?.phones?.length > 0) {
+        html += '<div class="card">';
+        html += '<div class="section-title">Phone Numbers</div>';
+
+        for (const phone of data.contacts.phones) {
+          html += '<div class="contact-card">';
+          html +=
+            '<div class="contact-value">' + phone.number + "</div>";
+          html += '<div class="contact-meta">';
+          html +=
+            '<span class="badge ' +
+            getConfidenceBadgeClass(phone.confidence) +
+            '">' +
+            getConfidenceLabel(phone.confidence) +
+            " " +
+            Math.round(phone.confidence * 100) +
+            "%</span>";
+
+          if (phone.sources && phone.sources.length > 0) {
+            for (const src of phone.sources) {
+              html += '<span class="badge badge-source">' + src.type + "</span>";
+              if (src.url) {
+                html +=
+                  '<a class="source-url" href="' +
+                  src.url +
+                  '" target="_blank" rel="noopener">' +
+                  src.url +
+                  "</a>";
+              }
+            }
+          }
+
+          html += "</div>";
+          html += "</div>";
+        }
+
+        html += "</div>";
+      }
+
+      if (data.contacts?.emails?.length > 0) {
+        html += '<div class="card">';
+        html += '<div class="section-title">Email Addresses</div>';
+
+        for (const email of data.contacts.emails) {
+          html += '<div class="contact-card">';
+          html +=
+            '<div class="contact-value">' + email.email + "</div>";
+          html += '<div class="contact-meta">';
+          html +=
+            '<span class="badge ' +
+            getConfidenceBadgeClass(email.confidence) +
+            '">' +
+            getConfidenceLabel(email.confidence) +
+            " " +
+            Math.round(email.confidence * 100) +
+            "%</span>";
+          html += "</div>";
+          html += "</div>";
+        }
+
+        html += "</div>";
+      }
+
+      if (data.message) {
+        html += '<div class="status status-info">' + data.message + "</div>";
+      }
+
+      if (
+        !data.contacts?.phones?.length &&
+        !data.contacts?.emails?.length &&
+        !data.message
+      ) {
+        html +=
+          '<div class="status status-info">Business identified, but no publicly available business phone number was found.</div>';
+      }
+
+      resultEl.innerHTML = html;
+    }
+
+    document.getElementById("gstin-input").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        startLookup();
+      }
+    });
+  </script>
+</body>
+</html>
